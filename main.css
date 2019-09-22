@@ -1,7 +1,7 @@
 body {
     height: 100vh;
     width: 100vw;
-    background: #D74177;
+    background: #ffffff;
     display: flex;
     transition: all 1s ease-in-out;
     justify-content: center;
@@ -10,7 +10,39 @@ body {
 }
 
 h1 {
-    color: white;
+    color: #343434;
     font-family: 'Raleway'; /* Google Font */
     font-size: 4vw;
+}
+
+button {
+    height: 5.5vh;
+    width: 12vw;
+    background-color: #ffffff;
+    color: #343434;
+    font-family: 'Raleway'; 
+    font-size: 1vw;
+    border-radius: 8px;
+    box-shadow: 1px 1px 5px #999999;
+    transition: all .2s ease-in-out;
+    margin-bottom: 4vh;
+}
+
+#buttongroup {
+    flex-direction: row;
+    margin-top: 6vh;
+}
+
+#buttongroup button:last-child {
+    margin-left: 2vw;
+}
+
+button:focus {
+    outline: 0;
+}
+
+p {
+    color: #343434;
+    font-family: 'Raleway'; /* Google Font */
+    font-size: 3vw;
 }

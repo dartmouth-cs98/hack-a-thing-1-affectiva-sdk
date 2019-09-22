@@ -9,16 +9,18 @@
         <script type="text/javascript" src="https://download.affectiva.com/js/3.2.1/affdex.js"></script>
     </header>
     <body>
+        <h1>Do you have an rbf?</h1>
         <div id="affdex_elements" style="width:680px;height:480px;"></div>
-        <h1>How are you feeling?</h1>
-        <button id="start" onclick="onStart()">Start</button>
-        <button id="stop" onclick="onStop()">Stop</button>
+        <div id="buttongroup">
+            <button id="start" onclick="onStart()">Start</button>
+            <button id="stop" onclick="onStop()">Stop</button>
+        </div>
+        <p id="answer">????</p>
     </body>
           
     <!-- modified from examples and documentation at https://jsfiddle.net/qu3Lvzpg/ 
         and https://knowledge.affectiva.com/v3.3/docs/analyze-the-camera-stream-3-->
     <script>
-        
         // SDK Needs to create video and canvas nodes in the DOM in order to function
         // Here we are adding those nodes a predefined div.
         var divRoot = $("#affdex_elements")[0];
@@ -70,20 +72,12 @@
         // max getter stolen from https://stackoverflow.com/questions/27376295/getting-key-with-the-highest-value-from-object
         detector.addEventListener("onImageResultsSuccess", function(faces, image, timestamp) {
             if (faces.length > 0) {
-                var emotion= Object.keys(faces[0].emotions).reduce((a, b) => faces[0].emotions[a] > faces[0].emotions[b] ? a : b);
-                console.log(emotion);
-                if (emotion == 'joy')  {
-                    document.body.style.background = '#FCF4a3';
-                } else if (emotion== 'anger' || emotion== 'contempt') {
-                    document.body.style.background = '#ff0000';
-                } else if (emotion== 'sadness') {
-                    document.body.style.background = '#0000ff';
-                } else if (emotion== 'disgust') {
-                    document.body.style.background = '#00ff00';
-                } else if (emotion== 'surprise') {
-                    document.body.style.background = '#F26530';
-                } else if (emotion== 'fear') {
-                    document.body.style.background = '#cb81ff';
+                if (faces.length > 0) {
+                    if (faces[0].emotions["anger"] + faces[0].emotions["disgust"] + faces[0].emotions["contempt"] >= .6) {
+                        document.getElementById("answer").innerHTML = "YES";
+                    } else {
+                        document.getElementById("answer").innerHTML = "NO";
+                    }
                 }
             }
         });

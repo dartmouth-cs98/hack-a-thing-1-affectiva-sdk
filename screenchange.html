@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <link rel="stylesheet" href="main.css"/>
+        <title>Emotion Mirror</title>
+        <!-- Google Font to include -->
+        <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+        <script type="text/javascript" src="//code.jquery.com/jquery-3.1.0.js"></script>
+        <script type="text/javascript" src="https://download.affectiva.com/js/3.2.1/affdex.js"></script>
+    </header>
+    <body>
+        <h1>How are you feeling?</h1>
+        <div id="affdex_elements" style="width:680px;height:480px;"></div>
+        <div id="buttongroup">
+            <button id="start" onclick="onStart()">Start</button>
+            <button id="stop" onclick="onStop()">Stop</button>
+        </div>
+    </body>
+          
+    <!-- modified from examples and documentation at https://jsfiddle.net/qu3Lvzpg/ 
+        and https://knowledge.affectiva.com/v3.3/docs/analyze-the-camera-stream-3-->
+    <script>
+        // SDK Needs to create video and canvas nodes in the DOM in order to function
+        // Here we are adding those nodes a predefined div.
+        var divRoot = $("#affdex_elements")[0];
+        var width = 640;
+        var height = 480;
+        var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
+        //Construct a CameraDetector and specify the image width / height and face detector mode.
+        var detector = new affdex.CameraDetector(divRoot, width, height, faceMode);
+
+        detector.detectEmotions.joy = true;
+        detector.detectEmotions.sadness = true;
+        detector.detectEmotions.anger = true;
+        detector.detectEmotions.disgust = true;
+        detector.detectEmotions.contempt = true;
+        detector.detectEmotions.fear = true;
+        detector.detectEmotions.surprise = true;
+
+        //Add a callback to notify when the detector is initialized and ready for runing.
+        detector.addEventListener("onInitializeSuccess", function() {
+            console.log("The detector is initialized");
+        });
+
+        //function executes when Start button is pushed.
+        function onStart() {
+            if (detector && !detector.isRunning) {
+                detector.start();
+                //document.getElementById('face_video').style.display = 'none';
+            }
+            console.log("Clicked the start button");
+        }
+
+        function onStop() {
+            if (detector && detector.isRunning) {
+            detector.removeEventListener();
+            detector.stop();
+            }
+      };
+
+        //Add a callback to notify when camera access is allowed
+        detector.addEventListener("onWebcamConnectSuccess", function() {
+            console.log("Webcam access allowed");
+        });
+
+        //Add a callback to notify when camera access is denied
+        detector.addEventListener("onWebcamConnectFailure", function() {
+            console.log("Webcam access denied");
+        });
+
+        // max getter stolen from https://stackoverflow.com/questions/27376295/getting-key-with-the-highest-value-from-object
+        detector.addEventListener("onImageResultsSuccess", function(faces, image, timestamp) {
+            if (faces.length > 0) {
+                var emotion= Object.keys(faces[0].emotions).reduce((a, b) => faces[0].emotions[a] > faces[0].emotions[b] ? a : b);
+                console.log(emotion);
+                if (emotion == 'joy')  {
+                    document.body.style.background = '#FCF4a3';
+                } else if (emotion== 'anger' || emotion== 'contempt') {
+                    document.body.style.background = '#DB5461';
+                } else if (emotion== 'sadness') {
+                    document.body.style.background = '#86BBD8';
+                } else if (emotion== 'disgust') {
+                    document.body.style.background = '#90BE6D';
+                } else if (emotion== 'surprise') {
+                    document.body.style.background = '#F37748';
+                } else if (emotion== 'fear') {
+                    document.body.style.background = '#CDC1FF';
+                }
+            }
+        });
+    </script>
+          
+</html>

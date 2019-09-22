@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <link rel="stylesheet" href="main.css"/>
+        <title>Emotion Mirror</title>
+        <!-- Google Font to include -->
+        <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+        <script type="text/javascript" src="//code.jquery.com/jquery-3.1.0.js"></script>
+        <script type="text/javascript" src="https://download.affectiva.com/js/3.2.1/affdex.js"></script>
+        <script src="//d3js.org/d3.v4.min.js"></script>
+    </header>
+    <body>
+        <div id="affdex_elements" style="width:680px;height:480px;display:none;"></div>
+        <h1>How are you feeling?</h1>
+        <div id="pie"></div>
+        <div id="buttongroup">
+            <button id="start" onclick="onStart()">Start</button>
+            <button id="stop" onclick="onStop()">Stop</button>
+        </div>
+    </body>
+          
+    <!-- modified from examples and documentation at https://jsfiddle.net/qu3Lvzpg/ 
+        and https://knowledge.affectiva.com/v3.3/docs/analyze-the-camera-stream-3-->
+    <!-- pie chart code modified from http://www.cagrimmett.com/til/2016/08/19/d3-pie-chart.html tutorial -->
+    <script>
+        // SDK Needs to create video and canvas nodes in the DOM in order to function
+        // Here we are adding those nodes a predefined div.
+        var divRoot = $("#affdex_elements")[0];
+        var width = 640;
+        var height = 480;
+        var faceMode = affdex.FaceDetectorMode.LARGE_FACES;
+        //Construct a CameraDetector and specify the image width / height and face detector mode.
+        var detector = new affdex.CameraDetector(divRoot, width, height, faceMode);
+
+        var data= [{"emotion":"joy","percent":16}, 
+                   {"emotion":"anger","percent":16},
+                   {"emotion":"disgust","percent":16}, 
+                   {"emotion":"sadness","percent":16}, 
+                   {"emotion":"surprise","percent":16}, 
+                   {"emotion":"fear","percent":16}];
+        var width = 300;
+	    var height = 300;
+	    var radius = Math.min(width, height) / 2;
+        var color = d3.scaleOrdinal().range(["#FCF4a3","#DB5461","#90BE6D","#86BBD8","#F37748","#CDC1FF"]);
+        var pie = d3.pie().value(function(d) { return d.percent; })(data);
+        var arc = d3.arc().outerRadius(radius - 10).innerRadius(0);
+
+        var svg = d3.select("#pie").append("svg").attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width/2 + "," + height/2 +")");
+
+        var g = svg.selectAll("arc").data(pie).enter()
+            .append("g").attr("class", "arc");
+        
+        g.append("path").attr("d", arc).style("fill", function(d) { return color(d.data.emotion);});
+
+        detector.detectEmotions.joy = true;
+        detector.detectEmotions.sadness = true;
+        detector.detectEmotions.anger = true;
+        detector.detectEmotions.disgust = true;
+        detector.detectEmotions.contempt = true;
+        detector.detectEmotions.fear = true;
+        detector.detectEmotions.surprise = true;
+
+        //Add a callback to notify when the detector is initialized and ready for runing.
+        detector.addEventListener("onInitializeSuccess", function() {
+            console.log("The detector is initialized");
+        });
+
+        //function executes when Start button is pushed.
+        function onStart() {
+            if (detector && !detector.isRunning) {
+                detector.start();
+                document.getElementById('face_video').style.display = 'none';
+            }
+            console.log("Clicked the start button");
+        }
+
+        function onStop() {
+            if (detector && detector.isRunning) {
+            detector.removeEventListener();
+            detector.stop();
+            }
+      };
+
+        //Add a callback to notify when camera access is allowed
+        detector.addEventListener("onWebcamConnectSuccess", function() {
+            console.log("Webcam access allowed");
+        });
+
+        //Add a callback to notify when camera access is denied
+        detector.addEventListener("onWebcamConnectFailure", function() {
+            console.log("Webcam access denied");
+        });
+
+        function arcTween(a) {
+            var i = d3.interpolate(this._current, a);
+            this._current = i(0);
+            return function(t) {
+                return arc(i(t));
+            };
+        }
+
+        function change() {
+            var pie = d3.pie().value(function(d) { return d.percent; })(data);
+            path = d3.select("#pie").selectAll("path").data(pie);
+            path.transition().duration(500).attrTween("d", arcTween);
+        }
+
+        var debouncer = 0;
+        // max getter stolen from https://stackoverflow.com/questions/27376295/getting-key-with-the-highest-value-from-object
+        detector.addEventListener("onImageResultsSuccess", function(faces, image, timestamp) {
+            if (faces.length > 0) {
+                if (debouncer == 1){
+                    data= [{"emotion":"joy","percent":faces[0].emotions["joy"]}, 
+                    {"emotion":"anger","percent":faces[0].emotions["anger"]},
+                    {"emotion":"disgust","percent":faces[0].emotions["percent"]}, 
+                    {"emotion":"sadness","percent":faces[0].emotions["sadness"]}, 
+                    {"emotion":"surprise","percent":faces[0].emotions["surprise"]}, 
+                    {"emotion":"fear","percent":faces[0].emotions["fear"]}];
+                    change();
+                    debouncer += 1
+                } else if (debouncer == 10) {
+                    debouncer = 0;
+                } else {
+                    debouncer += 1;
+                }
+                // var emotion= Object.keys(faces[0].emotions).reduce((a, b) => faces[0].emotions[a] > faces[0].emotions[b] ? a : b);
+                // console.log(emotion);
+                // if (emotion == 'joy')  {
+                //     document.body.style.background = '#FCF4a3';
+                // } else if (emotion== 'anger' || emotion== 'contempt') {
+                //     document.body.style.background = '#ff0000';
+                // } else if (emotion== 'sadness') {
+                //     document.body.style.background = '#0000ff';
+                // } else if (emotion== 'disgust') {
+                //     document.body.style.background = '#00ff00';
+                // } else if (emotion== 'surprise') {
+                //     document.body.style.background = '#F26530';
+                // } else if (emotion== 'fear') {
+                //     document.body.style.background = '#cb81ff';
+                // }
+            }
+        });
+    </script>
+          
+</html>
